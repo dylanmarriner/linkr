@@ -1,0 +1,6 @@
+{
+  "version": 3,
+  "sources": [],
+  "sections": [
+    {"offset": {"line": 14, "column": 0}, "map": {"version":3,"sources":["file:///Users/appil/linkr/frontend/src/app/page.tsx"],"sourcesContent":["export default function Home() {\n  return (\n    <main className=\"min-h-screen flex flex-col items-center justify-center text-center p-8\">\n      <h1 className=\"text-5xl font-display mb-4\">Linkr</h1>\n      <p className=\"text-lg text-gray-300 mb-8\">Premium. Private. Powerful.</p>\n      <a href=\"/dashboard\" className=\"px-6 py-3 bg-gold text-black rounded-lg\">Go to Dashboard</a>\n    </main>\n  );\n}\n"],"names":[],"mappings":";;;;;;AAAe,SAAS;IACtB,qBACE,8OAAC;QAAK,WAAU;;0BACd,8OAAC;gBAAG,WAAU;0BAA6B;;;;;;0BAC3C,8OAAC;gBAAE,WAAU;0BAA6B;;;;;;0BAC1C,8OAAC;gBAAE,MAAK;gBAAa,WAAU;0BAA0C;;;;;;;;;;;;AAG/E","debugId":null}}]
+}

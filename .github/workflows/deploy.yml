@@ -1,0 +1,22 @@
+name: Deploy
+on:
+  push:
+    branches: [main]
+
+jobs:
+  deploy:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - name: Setup Node
+        uses: actions/setup-node@v4
+        with:
+          node-version: 24.10.0
+      - name: Install & Build
+        run: |
+          cd frontend && npm install && npm run build
+          cd ../backend && npm install && npm run build
+      - name: Deploy Backend
+        run: ssh ${{ secrets.DO_SSH_USER }}@${{ secrets.DO_SERVER_IP }} 'cd /srv/linkr/backend && git pull && npm i && pm2 restart linkr-backend || pm2 start dist/index.js --name linkr-backend'
+      - name: Deploy Frontend
+        run: vercel --token=${{ secrets.VERCEL_TOKEN }} --prod

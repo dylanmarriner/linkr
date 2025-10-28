@@ -1,0 +1,43 @@
+version: "3.9"
+services:
+  postgres:
+    image: postgres:16
+    environment:
+      POSTGRES_DB: linkr
+      POSTGRES_USER: linkr
+      POSTGRES_PASSWORD: linkr
+    ports: ["5432:5432"]
+    volumes: [pg:/var/lib/postgresql/data]
+
+  opensearch:
+    image: opensearchproject/opensearch:2
+    environment:
+      discovery.type: single-node
+      plugins.security.disabled: "true"
+      OPENSEARCH_JAVA_OPTS: "-Xms512m -Xmx512m"
+    ports: ["9200:9200"]
+    volumes: [os:/usr/share/opensearch/data]
+
+  posthog:
+    image: posthog/posthog:latest
+    environment:
+      DATABASE_URL: postgres://linkr:linkr@postgres:5432/linkr
+      SECRET_KEY: "dev-only-change-me"
+    depends_on: [postgres]
+    ports: ["8000:8000"]
+
+  n8n:
+    image: n8nio/n8n:latest
+    ports: ["5678:5678"]
+    environment:
+      N8N_BASIC_AUTH_ACTIVE: "true"
+      N8N_BASIC_AUTH_USER: admin
+      N8N_BASIC_AUTH_PASSWORD: admin
+
+  langfuse:
+    image: langfuse/langfuse:latest
+    ports: ["3001:3000"]
+
+volumes:
+  pg: {}
+  os: {}

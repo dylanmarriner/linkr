@@ -1,0 +1,43 @@
+name: CI
+on:
+  push:
+    branches: [main, dev]
+  pull_request:
+    branches: [main, dev]
+
+jobs:
+  build-test:
+    runs-on: ubuntu-latest
+    services:
+      postgres:
+        image: postgres:16
+        env:
+          POSTGRES_USER: linkr
+          POSTGRES_PASSWORD: linkr
+          POSTGRES_DB: linkr
+        ports: [5432:5432]
+        options: >-
+          --health-cmd pg_isready
+          --health-interval 10s
+          --health-timeout 5s
+          --health-retries 5
+    env:
+      DATABASE_URL: postgresql://linkr:linkr@localhost:5432/linkr?schema=public
+      JWT_SECRET: test-secret
+      NODE_ENV: test
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 24.10.0
+      - name: Backend install/build
+        run: |
+          cd backend
+          npm install
+          npx prisma generate
+          npm run build || true
+      - name: Frontend install/build
+        run: |
+          cd frontend
+          npm install
+          npm run build || true

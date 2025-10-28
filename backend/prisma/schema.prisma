@@ -1,0 +1,184 @@
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+enum Role {
+  CLIENT
+  PROVIDER
+  ADMIN
+}
+
+model User {
+  id          String   @id @default(cuid())
+  email       String   @unique
+  hash        String
+  role        Role
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+  isActive    Boolean  @default(true)
+  deleteAfter DateTime?
+
+  providerProfile ProviderProfile?
+  clientProfile   ClientProfile?
+  subscriptions   Subscription[]
+  verifications   Verification[]
+  sessions        Session[]
+  consents        ConsentRecord[]
+  auditLogs       AuditLog[]
+  payoutAccount   PayoutAccount?
+  paymentLogs     PaymentLog[]
+}
+
+model ProviderProfile {
+  id          String   @id @default(cuid())
+  userId      String   @unique
+  displayName String
+  bio         String?
+  location    String?
+  rateFrom    Int?
+  rateTo      Int?
+  isVerified  Boolean  @default(false)
+
+  user        User     @relation(fields: [userId], references: [id])
+  media       MediaAsset[]
+  messages    Message[] @relation("ProviderToMessage")
+  reviews     Review[]  @relation("ProviderToReview")
+}
+
+model ClientProfile {
+  id        String   @id @default(cuid())
+  userId    String   @unique
+  favorites String[]
+
+  user      User     @relation(fields: [userId], references: [id])
+  messages  Message[] @relation("ClientToMessage")
+  reviews   Review[]  @relation("ClientToReview")
+}
+
+model Subscription {
+  id           String   @id @default(cuid())
+  userId       String
+  planCode     String
+  status       String
+  startedAt    DateTime @default(now())
+  renewsAt     DateTime?
+  canceledAt   DateTime?
+  amountCents  Int
+  currency     String   @default("NZD")
+  paymentRef   String?
+
+  user         User     @relation(fields: [userId], references: [id])
+}
+
+model Verification {
+  id        String   @id @default(cuid())
+  userId    String
+  status    String
+  method    String
+  evidence  Json?
+  decidedBy String?
+  decidedAt DateTime?
+  expiresAt DateTime?
+
+  user      User     @relation(fields: [userId], references: [id])
+}
+
+model MediaAsset {
+  id         String   @id @default(cuid())
+  providerId String
+  kind       String
+  path       String
+  isPublic   Boolean  @default(false)
+  createdAt  DateTime @default(now())
+
+  provider   ProviderProfile @relation(fields: [providerId], references: [id])
+}
+
+model Message {
+  id         String   @id @default(cuid())
+  providerId String
+  clientId   String
+  body       String
+  createdAt  DateTime @default(now())
+  readAt     DateTime?
+
+  provider   ProviderProfile @relation("ProviderToMessage", fields: [providerId], references: [id])
+  client     ClientProfile   @relation("ClientToMessage", fields: [clientId], references: [id])
+}
+
+model Review {
+  id          String   @id @default(cuid())
+  providerId  String
+  clientId    String
+  rating      Int
+  comment     String?
+  createdAt   DateTime @default(now())
+
+  provider    ProviderProfile @relation("ProviderToReview", fields: [providerId], references: [id])
+  client      ClientProfile   @relation("ClientToReview", fields: [clientId], references: [id])
+}
+
+model ConsentRecord {
+  id         String   @id @default(cuid())
+  userId     String
+  type       String
+  value      Boolean
+  capturedAt DateTime @default(now())
+  version    String?
+  ipAddress  String?
+
+  user       User     @relation(fields: [userId], references: [id])
+}
+
+model PayoutAccount {
+  id             String   @id @default(cuid())
+  userId         String   @unique
+  accountName    String
+  accountNumber  String
+  bankCode       String?
+  verified       Boolean  @default(false)
+  totalPaidCents Int      @default(0)
+
+  user           User     @relation(fields: [userId], references: [id])
+}
+
+model PaymentLog {
+  id          String   @id @default(cuid())
+  userId      String
+  type        String
+  amountCents Int
+  currency    String   @default("NZD")
+  gateway     String
+  externalId  String?
+  status      String
+  createdAt   DateTime @default(now())
+  meta        Json?
+
+  user        User     @relation(fields: [userId], references: [id])
+}
+
+model AuditLog {
+  id        String   @id @default(cuid())
+  userId    String?
+  actorIp   String?
+  action    String
+  meta      Json?
+  createdAt DateTime @default(now())
+
+  user      User?    @relation(fields: [userId], references: [id])
+}
+
+model Session {
+  id        String   @id @default(cuid())
+  userId    String
+  token     String   @unique
+  expiresAt DateTime
+  createdAt DateTime @default(now())
+
+  user      User     @relation(fields: [userId], references: [id])
+}

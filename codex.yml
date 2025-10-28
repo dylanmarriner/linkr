@@ -1,0 +1,92 @@
+version: 1.0
+name: linkr
+description: >
+  Linkr — Full-stack platform (Next.js + Node/Prisma + PostgreSQL) with OpenSearch,
+  PostHog, n8n, Langfuse CE; Dockerized, CI/CD, and infra scripts.
+
+directories:
+  root: .
+  frontend: ./frontend
+  backend: ./backend
+  shared: ./shared
+  ops: ./ops
+
+env:
+  files:
+    - ./ops/env/.env              # shared defaults
+    - ./backend/.env              # backend runtime
+    - ./frontend/.env.local       # frontend runtime
+  required:
+    - NODE_ENV
+    - DATABASE_URL
+    - JWT_SECRET
+    - CLOUDFLARE_ZONE
+    - STORAGE_ENDPOINT
+    - STORAGE_ACCESS_KEY
+    - STORAGE_SECRET_KEY
+    - POSTHOG_API_KEY
+    - OPENSEARCH_URL
+
+entrypoints:
+  frontend:
+    path: ./frontend
+    type: nextjs
+    dev: pnpm dev
+    build: pnpm build
+    start: pnpm start
+    test: pnpm test
+    lint: pnpm lint
+  backend:
+    path: ./backend
+    type: node
+    dev: pnpm dev
+    build: pnpm build
+    start: pnpm start
+    test: pnpm test
+    lint: pnpm lint
+  ops:
+    path: ./ops
+    type: docker
+    start: docker compose -f docker-compose.yml up -d
+    stop: docker compose -f docker-compose.yml down
+
+workflows:
+  bootstrap:
+    - cmd: pnpm -w install
+    - cmd: (cd backend && pnpm dlx prisma generate)
+    - cmd: (cd backend && pnpm dlx prisma migrate deploy || pnpm dlx prisma migrate dev)
+  dev: 
+    - cmd: codex run ops start
+    - cmd: concurrently -n FRONTEND,BACKEND "codex run frontend dev" "codex run backend dev"
+  db:reset:
+    - cmd: (cd backend && pnpm dlx prisma migrate reset --force)
+  db:studio:
+    - cmd: (cd backend && pnpm dlx prisma studio)
+  test:all:
+    - cmd: concurrently -n FRONTEND,BACKEND "codex run frontend test" "codex run backend test"
+  lint:all:
+    - cmd: concurrently -n FRONTEND,BACKEND "codex run frontend lint" "codex run backend lint"
+  build:all:
+    - cmd: concurrently -n FRONTEND,BACKEND "codex run frontend build" "codex run backend build"
+
+services:
+  - name: postgres
+    ready_check: "pg_isready -h localhost -p 5432"
+  - name: opensearch
+    ready_check: "curl -fsS ${OPENSEARCH_URL}/_cluster/health"
+  - name: posthog
+    ready_check: "curl -fsS http://localhost:8000/health"
+  - name: n8n
+    ready_check: "curl -fsS http://localhost:5678"
+  - name: langfuse
+    ready_check: "curl -fsS http://localhost:3001/health"
+
+scripts:
+  db:migrate: "cd backend && pnpm dlx prisma migrate deploy"
+  index:seed: "cd ops/scripts && pnpm ts-node seed-opensearch.ts"
+  opensearch:rebuild: "cd ops && docker compose run --rm tools node scripts/reindex.js"
+
+ci:
+  github_actions:
+    - .github/workflows/ci.yml
+    - .github/workflows/deploy.yml
