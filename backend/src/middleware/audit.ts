@@ -1,28 +1,22 @@
-import { PrismaClient } from '@prisma/client';
-import { NextFunction, Request, Response } from 'express';
+import { Request, Response, NextFunction } from 'express';
 
-const prisma = new PrismaClient();
+export function audit(req: Request, _res: Response, next: NextFunction) {
+  const userInfo = req.user;
+  let userLabel = 'anonymous';
 
-type RequestWithUser = Request & {
-  user?: {
-    id?: string | null;
-  };
-};
+  if (typeof userInfo === 'string' && userInfo.trim()) {
+    userLabel = userInfo;
+  } else if (userInfo && typeof userInfo === 'object') {
+    const candidate =
+      ('id' in userInfo && userInfo.id) ||
+      ('email' in userInfo && userInfo.email) ||
+      ('username' in userInfo && (userInfo as Record<string, unknown>).username);
+    if (candidate && typeof candidate === 'string' && candidate.trim()) {
+      userLabel = candidate;
+    }
+  }
 
-export async function auditMiddleware(
-  req: RequestWithUser,
-  res: Response,
-  next: NextFunction
-) {
-  res.on('finish', async () => {
-    await prisma.auditLog.create({
-      data: {
-        userId: req.user?.id ?? null,
-        actorIp: req.ip,
-        action: `${req.method} ${req.originalUrl}`,
-        meta: { status: res.statusCode }
-      }
-    });
-  });
+  const path = req.originalUrl;
+  console.log(`[AUDIT] ${new Date().toISOString()} | ${userLabel} | ${path}`);
   next();
 }

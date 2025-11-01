@@ -1,17 +1,6 @@
-import { NextFunction, Request, Response } from 'express';
+import { Request, Response, NextFunction } from 'express';
 
-type HttpError = Error & {
-  status?: number;
-};
-
-export function errorHandler(
-  err: HttpError,
-  req: Request,
-  res: Response,
-  _next: NextFunction
-) {
-  console.error('❌', err);
-  res.status(err.status ?? 500).json({
-    message: err.message || 'Internal Server Error'
-  });
+export function errorHandler(err: Error, _req: Request, res: Response, _next: NextFunction) {
+  console.error('Unhandled error:', err);
+  res.status(500).json({ error: 'Internal Server Error' });
 }
