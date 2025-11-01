@@ -1,3 +1,11 @@
 node_modules/
-backend/dist/
-frontend/.next/
+.env
+.env.local
+dist/
+.next/
+.DS_Store
+node_modules/
+.next/
+dist/
+.env*
+.DS_Store
