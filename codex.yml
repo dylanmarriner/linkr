@@ -95,3 +95,8 @@ phases:
           ' backend/src/server.ts
       - name: Build and start backend
         run: npm run build --prefix backend
+tasks:
+  auth:
+    - run: npm install --prefix backend
+    - run: npx prisma generate --prefix backend
+    - run: npm run build --prefix backend
