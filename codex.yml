@@ -48,3 +48,50 @@ deploy:
     services:
       - frontend
       - backend
+phases:
+  phase1_backend_auth:
+    description: Build and deploy the Linkr backend authentication system.
+    depends_on:
+      - setup
+      - migrate
+    tasks:
+      - name: Install backend dependencies
+        run: npm install --prefix backend
+      - name: Generate Prisma client
+        run: npx prisma generate --prefix backend
+      - name: Create Auth structure
+        run: |
+          mkdir -p backend/src/modules/auth
+          echo "import express from 'express';
+          import bcrypt from 'bcrypt';
+          import jwt from 'jsonwebtoken';
+          import prisma from '../../prisma/client.js';
+          const router = express.Router();
+
+          router.post('/register', async (req, res) => {
+            const { email, password } = req.body;
+            if (!email || !password) return res.status(400).json({ error: 'Missing fields' });
+            const hash = await bcrypt.hash(password, 10);
+            const user = await prisma.user.create({ data: { email, hash, role: 'CLIENT' } });
+            res.json({ id: user.id, email: user.email });
+          });
+
+          router.post('/login', async (req, res) => {
+            const { email, password } = req.body;
+            const user = await prisma.user.findUnique({ where: { email } });
+            if (!user) return res.status(404).json({ error: 'User not found' });
+            const match = await bcrypt.compare(password, user.hash);
+            if (!match) return res.status(401).json({ error: 'Invalid credentials' });
+            const token = jwt.sign({ id: user.id, role: user.role }, process.env.JWT_SECRET, { expiresIn: '7d' });
+            res.json({ token });
+          });
+
+          export default router;" > backend/src/modules/auth/routes.ts
+      - name: Register routes in server
+        run: |
+          sed -i '' '/app.get(\"\/health\"/i\
+          import authRoutes from \"\.\/modules\/auth\/routes\";\
+          app.use(\"\/auth\", authRoutes);\
+          ' backend/src/server.ts
+      - name: Build and start backend
+        run: npm run build --prefix backend
