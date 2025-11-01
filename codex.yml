@@ -1,26 +1,29 @@
 version: 1.0
 name: linkr
-description: >
-  Linkr — Full-stack escort marketing platform built with Next.js (frontend) and Node.js/Prisma (backend).
-  The repository includes Dockerized environments, CI/CD automation, and SEO optimization tools.
+description: Linkr full-stack platform (Next.js frontend + Node/Prisma backend)
 
 directories:
   frontend: ./frontend
   backend: ./backend
   shared: ./shared
-  docker: ./ops
+  ops: ./ops
 
 entrypoints:
   frontend:
     path: ./frontend
     type: nextjs
-    start: npm run dev
     build: npm run build
+    start: npm start
   backend:
     path: ./backend
     type: node
-    start: npm run dev
     build: npm run build
+    start: npm run start
+
+environment:
+  node: "24.10.0"
+  database: postgresql
+  ports: [3000, 4000]
 
 tasks:
   setup:
@@ -31,72 +34,16 @@ tasks:
   migrate:
     - run: npx prisma migrate deploy --prefix backend
 
-  test:
-    - run: npm test --prefix backend
-    - run: npm run lint --prefix frontend
-
-environment:
-  node: "24.10.0"
-  database: postgresql
-  ports:
-    - 3000
-    - 4000
-
-deploy:
-  docker:
-    compose_file: ./ops/docker-compose.yml
-    services:
-      - frontend
-      - backend
-phases:
-  phase1_backend_auth:
-    description: Build and deploy the Linkr backend authentication system.
-    depends_on:
-      - setup
-      - migrate
-    tasks:
-      - name: Install backend dependencies
-        run: npm install --prefix backend
-      - name: Generate Prisma client
-        run: npx prisma generate --prefix backend
-      - name: Create Auth structure
-        run: |
-          mkdir -p backend/src/modules/auth
-          echo "import express from 'express';
-          import bcrypt from 'bcrypt';
-          import jwt from 'jsonwebtoken';
-          import prisma from '../../prisma/client.js';
-          const router = express.Router();
-
-          router.post('/register', async (req, res) => {
-            const { email, password } = req.body;
-            if (!email || !password) return res.status(400).json({ error: 'Missing fields' });
-            const hash = await bcrypt.hash(password, 10);
-            const user = await prisma.user.create({ data: { email, hash, role: 'CLIENT' } });
-            res.json({ id: user.id, email: user.email });
-          });
-
-          router.post('/login', async (req, res) => {
-            const { email, password } = req.body;
-            const user = await prisma.user.findUnique({ where: { email } });
-            if (!user) return res.status(404).json({ error: 'User not found' });
-            const match = await bcrypt.compare(password, user.hash);
-            if (!match) return res.status(401).json({ error: 'Invalid credentials' });
-            const token = jwt.sign({ id: user.id, role: user.role }, process.env.JWT_SECRET, { expiresIn: '7d' });
-            res.json({ token });
-          });
-
-          export default router;" > backend/src/modules/auth/routes.ts
-      - name: Register routes in server
-        run: |
-          sed -i '' '/app.get(\"\/health\"/i\
-          import authRoutes from \"\.\/modules\/auth\/routes\";\
-          app.use(\"\/auth\", authRoutes);\
-          ' backend/src/server.ts
-      - name: Build and start backend
-        run: npm run build --prefix backend
-tasks:
-  auth:
-    - run: npm install --prefix backend
-    - run: npx prisma generate --prefix backend
+  backend_build:
     - run: npm run build --prefix backend
+
+  frontend_build:
+    - run: npm install --prefix frontend
+    - run: NEXT_DISABLE_TURBOPACK=1 npm run build --prefix frontend
+
+  build:
+    - run: npm run build --prefix backend
+    - run: NEXT_DISABLE_TURBOPACK=1 npm run build --prefix frontend
+
+  deploy:
+    - run: docker compose -f ops/docker-compose.yml up -d
