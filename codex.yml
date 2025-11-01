@@ -19,6 +19,11 @@ entrypoints:
     type: node
     build: npm run build
     start: npm run start
+    entrypoints:
+  mobile:
+    path: ./mobile
+    type: react-native
+    build: npx expo export
 
 environment:
   node: "24.10.0"
@@ -30,6 +35,9 @@ tasks:
     - run: npm install --prefix backend
     - run: npm install --prefix frontend
     - run: npx prisma generate --prefix backend
+    - tasks:
+  mobile_build:
+    - run: npx expo export --platform all --output dist
 
   migrate:
     - run: npx prisma migrate deploy --prefix backend
