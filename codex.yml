@@ -1,85 +1,212 @@
-version: 1.0
-name: linkr
-description: Linkr full-stack platform (Next.js frontend + Node/Prisma backend)
+project:
+  name: "Linkr"
+  description: >
+    Premium New Zealand escort marketing platform.
+    Full-stack monorepo including backend (Express + Prisma + PostgreSQL),
+    frontend (Next.js 14 + Tailwind), and mobile (React Native / Expo).
+    This codex defines the canonical architecture, rules, requirements,
+    and expected output for any AI agent contributing to this codebase.
 
-directories:
-  frontend: ./frontend
-  backend: ./backend
-  shared: ./shared
-  ops: ./ops
+  version: 1.0.0
+  license: "Proprietary – Linkr NZ Ltd"
 
-entrypoints:
-  frontend:
-    path: ./frontend
-    type: nextjs
-    build: npm run build
-    start: npm start
+tech_stack:
+  language: "TypeScript"
   backend:
-    path: ./backend
-    type: node
-    build: npm run build
-    start: npm run start
-    entrypoints:
+    framework: "Express 5"
+    orm: "Prisma"
+    database: "PostgreSQL"
+    security:
+      - JWT access + refresh tokens
+      - bcrypt password hashing (cost >= 12)
+      - CSRF protection
+      - Rate limiting on sensitive routes
+      - Email verification
+      - Password reset
+      - 2FA (TOTP)
+      - Role-based access control
+      - Audit logging for admin actions
+  frontend:
+    framework: "Next.js 14 (App Router)"
+    styling: "Tailwind CSS"
+    theming: "Dark Luxury — charcoal + metallic gold"
   mobile:
-    path: ./mobile
-    type: react-native
-    build: npx expo export
+    framework: "React Native (Expo)"
+    platforms: ["android", "ios"]
+  infrastructure:
+    containerization: "Docker + docker-compose"
+    ci_cd: "GitHub Actions"
+    hosting: "DigitalOcean + Cloudflare"
+    storage: "DigitalOcean Spaces (S3-compatible)"
+  search:
+    engine: "OpenSearch"
+  analytics:
+    engine: "PostHog"
+  monitoring:
+    stack: ["BetterStack", "UptimeRobot"]
 
-environment:
-  node: "24.10.0"
-  database: postgresql
-  ports: [3000, 4000]
-
-tasks:
-  setup:
-    - run: npm install --prefix backend
-    - run: npm install --prefix frontend
-    - run: npx prisma generate --prefix backend
-    - tasks:
-  mobile_build:
-    - run: npx expo export --platform all --output dist
-
-  migrate:
-    - run: npx prisma migrate deploy --prefix backend
-
-  backend_build:
-    - run: npm run build --prefix backend
-
-  frontend_build:
-    - run: npm install --prefix frontend
-    - run: NEXT_DISABLE_TURBOPACK=1 npm run build --prefix frontend
-
-  build:
-    - run: npm run build --prefix backend
-    - run: NEXT_DISABLE_TURBOPACK=1 npm run build --prefix frontend
-
-  deploy:
-    - run: docker compose -f ops/docker-compose.yml up -d
-version: 1.0
-name: linkr
-description: Full stack Linkr build
-
-entrypoints:
+repository_structure:
+  root:
+    - backend/
+    - frontend/
+    - mobile/
+    - infra/
+    - docs/
+    - .env.example
+    - docker-compose.yml
+    - codex.yml
+    - AGENT.md
+    - AGENTS.md
+    - README.md
+    - .gitignore
   backend:
-    path: ./backend
-    type: node
-    build: npm run build
-    start: npm start
+    entry: "src/app.ts"
+    schema: "prisma/schema.prisma"
+    modules:
+      - auth
+      - users
+      - profiles
+      - subscriptions
+      - payments
+      - kyc
+      - media
+      - safety
+      - admin
+      - notifications
   frontend:
-    path: ./frontend
-    type: nextjs
-    build: cross-env NEXT_DISABLE_TURBOPACK=1 next build
-    start: next start -p 3000
+    entry: "app/page.tsx"
+  mobile:
+    entry: "app/index.tsx"
 
-tasks:
-  setup:
-    - run: npm install --prefix backend
-    - run: npm install --prefix frontend
-    - run: npx prisma generate --prefix backend
-  migrate:
-    - run: npx prisma migrate deploy --prefix backend
-  build:
-    - run: npm run build --prefix backend
-    - run: cross-env NEXT_DISABLE_TURBOPACK=1 npm run build --prefix frontend
-  deploy:
-    - run: docker compose -f ops/docker-compose.yml up -d
+ai_instructions:
+  global_rules:
+    - ALWAYS read: README.md, AGENT.md, AGENTS.md, codex.yml before writing code.
+    - NEVER change the core tech stack unless explicitly instructed.
+    - Keep all code strictly TypeScript.
+    - Respect the monorepo structure — no splitting repos.
+    - All backend code must be modular, testable, and documented.
+    - All frontend screens must connect to real API endpoints.
+    - All mobile functionality must reuse backend models and contracts.
+    - Code must be production-grade and security-first.
+    - All environment variables must be documented in `.env.example`.
+    - No placeholder code for core features — implement real logic.
+
+  backend_rules:
+    - Use Express 5 router-per-module pattern.
+    - Validate all requests with Zod.
+    - Use Prisma for all DB operations.
+    - Use Pino for logs.
+    - Error handling must follow centralized middleware.
+    - JWT access + refresh with rotation and invalidation on logout.
+    - Email verification + password reset flows MUST exist.
+    - Implement user data export + account deletion (Privacy Act compliant).
+    - Implement: KYC flow with Jumio, payment webhooks, safety encryption.
+    - Implement OpenSearch for discovery features.
+    - Admin panel API must include moderation + KYC + safety review.
+
+  frontend_rules:
+    - Must use Next.js 14 App Router.
+    - All public pages SSR/ISR for SEO.
+    - All dashboard pages client-side auth protected.
+    - Theme: dark (#0A0A0A / #1A1A1A) with gold (#D4AF37) branding.
+    - Include sitemap + structured data (schema.org).
+    - Forms must use React Hook Form + Zod.
+
+  mobile_rules:
+    - Use Expo managed workflow.
+    - Implement login / register / 2FA / KYC status.
+    - Provider dashboard: profile quick edit + availability.
+    - Safety Center: panic + scheduled check-ins with push notifications.
+    - Build-ready configs for APK + IPA.
+
+  infra_rules:
+    - All services containerized.
+    - GitHub Actions must build + push Docker images on main.
+    - Backend migrations must run automatically on deploy.
+    - Follow DigitalOcean + Cloudflare architecture from audits.
+
+  documentation_rules:
+    - Complex flows must include diagrams (markdown).
+    - Keep docs consistent with code (docs cannot lag behind).
+    - Update technical audit references inside docs/.
+
+feature_checklist:
+  auth:
+    - register / login / logout
+    - email verification
+    - password reset
+    - refresh token rotation
+    - 2FA (TOTP)
+    - roles: admin, provider, client (read-only)
+    - device/ip tracking
+  kyc:
+    - Jumio API integration
+    - Webhook to update status
+    - Backend stores ONLY status + ref IDs (no images)
+  profiles:
+    - name, bio, service categories, pricing, availability
+    - inclusive gender/orientation model
+    - verified badge (from KYC)
+    - photo uploads with watermarking hook
+  payments:
+    - 6 weekly tiers
+    - 5 monthly tiers
+    - self-service upgrade/downgrade/cancel
+    - SegPay/CCBill webhooks
+  safety:
+    - panic button
+    - scheduled check-ins
+    - encrypted "Black Book" alerts (AES-256-GCM)
+  search:
+    - OpenSearch-backed filters (city, service, price, orientation, KYC)
+  admin:
+    - moderation queue
+    - user/profile banning
+    - KYC review
+    - payment logs
+    - audit logs
+  notifications:
+    - email notifications (SMTP)
+    - in-app notifications
+    - push (mobile)
+
+code_quality:
+  style: "Prettier + ESLint"
+  tests:
+    backend: "Jest + Supertest"
+    frontend: "Playwright"
+    mobile: "Jest + React Native Testing Library"
+  minimum_coverage: 70%
+
+security:
+  password_policy:
+    min_length: 10
+    require_numbers: true
+    require_symbols: true
+  encryption:
+    - AES-256-GCM for sensitive data
+  rate_limits:
+    auth_routes: "5 req/min"
+    sensitive_routes: "20 req/min"
+  logging:
+    - no sensitive data in logs
+  compliance:
+    - NZ Privacy Act 2020
+    - Prostitution Reform Act 2003
+    - GDPR-style data export + deletion
+
+ai_roles:
+  - architect
+  - backend
+  - frontend
+  - mobile
+  - devops
+  - documentation
+  - qa
+
+final_goal: >
+  To instruct ANY AI to generate the complete Linkr platform
+  end-to-end (backend + frontend + mobile + infra),
+  ready to build Android APK + iOS IPA,
+  fully functional, compliant, secure, and production-ready
+  using the specifications, audits, and business rules defined in this codex.
