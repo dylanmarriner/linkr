@@ -1,0 +1,25 @@
+{
+  "version": 1,
+  "project": "Linkr – Escort Marketing Platform (NZ)",
+  "guidelines": [
+    "Always read README.md, AGENT.md, and AGENTS.md before making changes.",
+    "Respect the existing folder structure: backend/, frontend/, mobile/, infra/.",
+    "Prefer TypeScript for all new code in backend, frontend, and mobile.",
+    "Never commit .env or secrets; rely on .env.example.",
+    "Preserve security-critical functionality; do not strip it to simplify.",
+    "When generating code, aim for small, coherent changes per request."
+  ],
+  "backend": {
+    "root": "backend",
+    "language": "typescript",
+    "framework": "express"
+  },
+  "frontend": {
+    "root": "frontend",
+    "framework": "nextjs"
+  },
+  "mobile": {
+    "root": "mobile",
+    "framework": "react-native"
+  }
+}
