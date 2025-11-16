@@ -1,0 +1,16 @@
+{
+  "projectName": "Linkr",
+  "description": "Premium escort marketing platform for New Zealand – monorepo starter.",
+  "instructions": [
+    "Treat this repository as the single source of truth.",
+    "Do not change the fundamental tech stack.",
+    "Before large changes, update or review AGENT.md / AGENTS.md.",
+    "Keep generated code production-grade, not just example snippets.",
+    "Always wire new functionality to real routes and screens (no dead code)."
+  ],
+  "entryPoints": [
+    "backend/src/app.ts",
+    "frontend/app/page.tsx",
+    "mobile/app/index.tsx"
+  ]
+}
