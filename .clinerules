@@ -1,0 +1,18 @@
+project_name: "Linkr"
+description: "Escort marketing monorepo for NZ – full stack + mobile"
+rules:
+  - "Read README.md and AGENT.md before implementing features."
+  - "All new server and client code must be TypeScript."
+  - "Do not change the stack (Express + Prisma + Next.js + React Native)."
+  - "Implement security, privacy, and safety features exactly as described in the audits."
+  - "Keep environment variables aligned with .env.example."
+preferred_directories:
+  - backend
+  - frontend
+  - mobile
+  - infra
+lint:
+  enable: true
+  tools:
+    - eslint
+    - prettier
