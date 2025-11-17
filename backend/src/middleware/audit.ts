@@ -1,6 +1,8 @@
 import { Request, Response, NextFunction } from 'express';
 
-export function audit(req: Request, _res: Response, next: NextFunction) {
+type AuditedRequest = Request & { user?: unknown };
+
+export function audit(req: AuditedRequest, _res: Response, next: NextFunction) {
   const userInfo = req.user;
   let userLabel = 'anonymous';
 

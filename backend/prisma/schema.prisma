@@ -14,69 +14,93 @@ enum Role {
 }
 
 model User {
-  id          String   @id @default(cuid())
-  email       String   @unique
-  hash        String
-  role        Role
-  createdAt   DateTime @default(now())
-  updatedAt   DateTime @updatedAt
-  isActive    Boolean  @default(true)
-  deleteAfter DateTime?
+  id               String    @id @default(cuid())
+  email            String    @unique
+  hash             String
+  role             Role
+  createdAt        DateTime  @default(now())
+  updatedAt        DateTime  @updatedAt
+  isActive         Boolean   @default(true)
+  deleteAfter      DateTime?
+  emailVerifiedAt  DateTime?
+  twoFactorSecret  String?
+  twoFactorEnabled Boolean   @default(false)
 
-  providerProfile ProviderProfile?
-  clientProfile   ClientProfile?
-  subscriptions   Subscription[]
-  verifications   Verification[]
-  sessions        Session[]
-  consents        ConsentRecord[]
-  auditLogs       AuditLog[]
-  payoutAccount   PayoutAccount?
-  paymentLogs     PaymentLog[]
+  providerProfile     ProviderProfile?
+  clientProfile       ClientProfile?
+  subscriptions       Subscription[]
+  verifications       Verification[]
+  sessions            Session[]
+  consents            ConsentRecord[]
+  auditLogs           AuditLog[]
+  payoutAccount       PayoutAccount?
+  paymentLogs         PaymentLog[]
+  verificationTokens  VerificationToken[]
+  safetyAlerts        SafetyAlert[]
+  paymentTransactions PaymentTransaction[]
+  notifications       Notification[]
+  safetyCheckIns      SafetyCheckIn[]
 }
 
 model ProviderProfile {
   id          String   @id @default(cuid())
   userId      String   @unique
+  cityId      String?
   displayName String
+  slug        String?  @unique
+  headline    String?
   bio         String?
   location    String?
   rateFrom    Int?
   rateTo      Int?
+  languages   String[] @default([])
+  services    String[] @default([])
   isVerified  Boolean  @default(false)
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
 
-  user        User     @relation(fields: [userId], references: [id])
-  media       MediaAsset[]
-  messages    Message[] @relation("ProviderToMessage")
-  reviews     Review[]  @relation("ProviderToReview")
+  user                User                 @relation(fields: [userId], references: [id])
+  city                City?                @relation(fields: [cityId], references: [id])
+  media               MediaAsset[]
+  messages            Message[]            @relation("ProviderToMessage")
+  reviews             Review[]             @relation("ProviderToReview")
+  paymentTransactions PaymentTransaction[]
+  categories          ProviderCategory[]
+  availability        AvailabilitySlot[]
+  views               ProfileView[]
+  highlights          ProfileHighlight[]
 }
 
 model ClientProfile {
-  id        String   @id @default(cuid())
-  userId    String   @unique
-  favorites String[]
+  id          String   @id @default(cuid())
+  userId      String   @unique
+  favorites   String[]
+  preferences Json?
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
 
-  user      User     @relation(fields: [userId], references: [id])
-  messages  Message[] @relation("ClientToMessage")
-  reviews   Review[]  @relation("ClientToReview")
+  user     User      @relation(fields: [userId], references: [id])
+  messages Message[] @relation("ClientToMessage")
+  reviews  Review[]  @relation("ClientToReview")
 }
 
 model Subscription {
-  id           String   @id @default(cuid())
-  userId       String
-  planCode     String
-  status       String
-  startedAt    DateTime @default(now())
-  renewsAt     DateTime?
-  canceledAt   DateTime?
-  amountCents  Int
-  currency     String   @default("NZD")
-  paymentRef   String?
+  id          String    @id @default(cuid())
+  userId      String
+  planCode    String
+  status      String
+  startedAt   DateTime  @default(now())
+  renewsAt    DateTime?
+  canceledAt  DateTime?
+  amountCents Int
+  currency    String    @default("NZD")
+  paymentRef  String?
 
-  user         User     @relation(fields: [userId], references: [id])
+  user User @relation(fields: [userId], references: [id])
 }
 
 model Verification {
-  id        String   @id @default(cuid())
+  id        String    @id @default(cuid())
   userId    String
   status    String
   method    String
@@ -84,8 +108,11 @@ model Verification {
   decidedBy String?
   decidedAt DateTime?
   expiresAt DateTime?
+  notes     String?
+  createdAt DateTime  @default(now())
+  updatedAt DateTime  @updatedAt
 
-  user      User     @relation(fields: [userId], references: [id])
+  user User @relation(fields: [userId], references: [id])
 }
 
 model MediaAsset {
@@ -95,32 +122,33 @@ model MediaAsset {
   path       String
   isPublic   Boolean  @default(false)
   createdAt  DateTime @default(now())
+  metadata   Json?
 
-  provider   ProviderProfile @relation(fields: [providerId], references: [id])
+  provider ProviderProfile @relation(fields: [providerId], references: [id])
 }
 
 model Message {
-  id         String   @id @default(cuid())
+  id         String    @id @default(cuid())
   providerId String
   clientId   String
   body       String
-  createdAt  DateTime @default(now())
+  createdAt  DateTime  @default(now())
   readAt     DateTime?
 
-  provider   ProviderProfile @relation("ProviderToMessage", fields: [providerId], references: [id])
-  client     ClientProfile   @relation("ClientToMessage", fields: [clientId], references: [id])
+  provider ProviderProfile @relation("ProviderToMessage", fields: [providerId], references: [id])
+  client   ClientProfile   @relation("ClientToMessage", fields: [clientId], references: [id])
 }
 
 model Review {
-  id          String   @id @default(cuid())
-  providerId  String
-  clientId    String
-  rating      Int
-  comment     String?
-  createdAt   DateTime @default(now())
+  id         String   @id @default(cuid())
+  providerId String
+  clientId   String
+  rating     Int
+  comment    String?
+  createdAt  DateTime @default(now())
 
-  provider    ProviderProfile @relation("ProviderToReview", fields: [providerId], references: [id])
-  client      ClientProfile   @relation("ClientToReview", fields: [clientId], references: [id])
+  provider ProviderProfile @relation("ProviderToReview", fields: [providerId], references: [id])
+  client   ClientProfile   @relation("ClientToReview", fields: [clientId], references: [id])
 }
 
 model ConsentRecord {
@@ -132,19 +160,19 @@ model ConsentRecord {
   version    String?
   ipAddress  String?
 
-  user       User     @relation(fields: [userId], references: [id])
+  user User @relation(fields: [userId], references: [id])
 }
 
 model PayoutAccount {
-  id             String   @id @default(cuid())
-  userId         String   @unique
+  id             String  @id @default(cuid())
+  userId         String  @unique
   accountName    String
   accountNumber  String
   bankCode       String?
-  verified       Boolean  @default(false)
-  totalPaidCents Int      @default(0)
+  verified       Boolean @default(false)
+  totalPaidCents Int     @default(0)
 
-  user           User     @relation(fields: [userId], references: [id])
+  user User @relation(fields: [userId], references: [id])
 }
 
 model PaymentLog {
@@ -159,7 +187,7 @@ model PaymentLog {
   createdAt   DateTime @default(now())
   meta        Json?
 
-  user        User     @relation(fields: [userId], references: [id])
+  user User @relation(fields: [userId], references: [id])
 }
 
 model AuditLog {
@@ -170,7 +198,7 @@ model AuditLog {
   meta      Json?
   createdAt DateTime @default(now())
 
-  user      User?    @relation(fields: [userId], references: [id])
+  user User? @relation(fields: [userId], references: [id])
 }
 
 model Session {
@@ -180,5 +208,136 @@ model Session {
   expiresAt DateTime
   createdAt DateTime @default(now())
 
-  user      User     @relation(fields: [userId], references: [id])
+  user User @relation(fields: [userId], references: [id])
+}
+
+model VerificationToken {
+  id         String    @id @default(cuid())
+  userId     String
+  type       String
+  token      String    @unique
+  expiresAt  DateTime
+  consumedAt DateTime?
+  meta       Json?
+
+  user User @relation(fields: [userId], references: [id])
+}
+
+model SafetyAlert {
+  id               String    @id @default(cuid())
+  userId           String
+  level            String
+  message          String
+  encryptedPayload String?
+  acknowledgedAt   DateTime?
+  createdAt        DateTime  @default(now())
+
+  user User @relation(fields: [userId], references: [id])
+}
+
+model PaymentTransaction {
+  id          String   @id @default(cuid())
+  userId      String
+  providerId  String?
+  gateway     String
+  amountCents Int
+  currency    String   @default("NZD")
+  status      String
+  externalId  String?
+  meta        Json?
+  createdAt   DateTime @default(now())
+
+  user     User             @relation(fields: [userId], references: [id])
+  provider ProviderProfile? @relation(fields: [providerId], references: [id])
+}
+
+model City {
+  id          String   @id @default(cuid())
+  slug        String   @unique
+  name        String
+  region      String?
+  heroImage   String?
+  tagline     String?
+  description String?
+  createdAt   DateTime @default(now())
+
+  providers ProviderProfile[]
+}
+
+model Category {
+  id          String   @id @default(cuid())
+  slug        String   @unique
+  label       String
+  description String?
+  createdAt   DateTime @default(now())
+
+  providers ProviderCategory[]
+}
+
+model ProviderCategory {
+  providerId String
+  categoryId String
+  assignedAt DateTime @default(now())
+
+  provider ProviderProfile @relation(fields: [providerId], references: [id])
+  category Category        @relation(fields: [categoryId], references: [id])
+
+  @@id([providerId, categoryId])
+}
+
+model AvailabilitySlot {
+  id         String  @id @default(cuid())
+  providerId String
+  dayOfWeek  Int
+  startTime  String
+  endTime    String
+  isVirtual  Boolean @default(false)
+
+  provider ProviderProfile @relation(fields: [providerId], references: [id])
+}
+
+model ProfileView {
+  id         String   @id @default(cuid())
+  providerId String
+  source     String?
+  occurredAt DateTime @default(now())
+  geo        Json?
+
+  provider ProviderProfile @relation(fields: [providerId], references: [id])
+}
+
+model ProfileHighlight {
+  id         String    @id @default(cuid())
+  providerId String
+  title      String
+  body       String
+  activeFrom DateTime  @default(now())
+  activeTo   DateTime?
+
+  provider ProviderProfile @relation(fields: [providerId], references: [id])
+}
+
+model Notification {
+  id        String    @id @default(cuid())
+  userId    String
+  kind      String
+  title     String
+  body      String
+  meta      Json?
+  readAt    DateTime?
+  createdAt DateTime  @default(now())
+
+  user User @relation(fields: [userId], references: [id])
+}
+
+model SafetyCheckIn {
+  id           String    @id @default(cuid())
+  userId       String
+  scheduledFor DateTime
+  completedAt  DateTime?
+  escalatedAt  DateTime?
+  status       String    @default("scheduled")
+  notes        String?
+
+  user User @relation(fields: [userId], references: [id])
 }

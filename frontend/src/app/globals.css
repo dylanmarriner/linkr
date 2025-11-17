@@ -1,6 +1,57 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+:root {
+  --color-charcoal: #0a0a0a;
+  --color-charcoal-2: #1a1a1a;
+  --color-gold: #d4af37;
+  --color-rose: #b76e79;
+  color-scheme: dark;
+}
+
+html,
+body {
+  height: 100%;
+}
+
 body {
   margin: 0;
-  font-family: system-ui, sans-serif;
-  background-color: #0A0A0A;
-  color: #f5f5f5;
+  background: radial-gradient(circle at top, rgba(212, 175, 55, 0.08), transparent 55%),
+    var(--color-charcoal);
+  color: #f7f4ef;
+  font-family: var(--font-sans);
+  min-height: 100vh;
+}
+
+::selection {
+  background: var(--color-gold);
+  color: var(--color-charcoal);
+}
+
+@layer base {
+  h1,
+  h2,
+  h3,
+  h4,
+  h5,
+  h6 {
+    font-family: var(--font-display);
+    letter-spacing: 0.02em;
+  }
+}
+
+@layer components {
+  .container-lux {
+    width: min(1200px, 100%);
+    margin-inline: auto;
+    padding-inline: 1.5rem;
+  }
+
+  .card-lux {
+    border: 1px solid rgba(212, 175, 55, 0.2);
+    background: rgba(15, 15, 15, 0.8);
+    border-radius: 1.25rem;
+    box-shadow: 0 20px 40px rgba(0, 0, 0, 0.35);
+  }
 }
